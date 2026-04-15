@@ -30,6 +30,32 @@ Follow the steps:
 - npm i
 - ng serve
 
+## Product Service (Task 3)
+
+The infrastructure includes `ProductServiceStack` with:
+
+- `GET /products` -> `getProductsList` Lambda
+- `GET /products/{productId}` -> `getProductsById` Lambda
+
+Deploy product service:
+
+- `cd infra`
+- `npm run deploy:product -- --profile <your-profile> --region eu-central-1`
+
+After deploy, take `ProductServiceApiUrl` from CloudFormation stack outputs and update:
+
+- `src/environments/environment.ts`
+- `src/environments/environment.prod.ts`
+
+Set:
+
+- `apiEndpoints.product` to `ProductServiceApiUrl` without trailing `/`
+- `apiEndpointsEnabled.product` to `true`
+
+Rebuild frontend:
+
+- `npm run build`
+
 ## Troubleshooting
 
 ### Cannot commit

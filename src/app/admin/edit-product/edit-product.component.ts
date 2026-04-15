@@ -62,6 +62,7 @@ export class EditProductComponent implements OnInit {
   form = this.fb.group({
     title: ['', Validators.required],
     description: ['', Validators.required],
+    url: ['', Validators.required],
     price: ['', Validators.required],
     count: ['', Validators.required],
   });
@@ -88,6 +89,10 @@ export class EditProductComponent implements OnInit {
 
   get priceCtrl(): AbstractControl {
     return this.form.get('price') as AbstractControl;
+  }
+
+  get urlCtrl(): AbstractControl {
+    return this.form.get('url') as AbstractControl;
   }
 
   get titleCtrl(): AbstractControl {
