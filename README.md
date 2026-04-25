@@ -56,6 +56,40 @@ Rebuild frontend:
 
 - `npm run build`
 
+## DynamoDB tables
+
+`TodoStackDynamoDB` now creates one DynamoDB table:
+
+- `AppTable` with composite key `PK` + `SK`
+
+The table stores two entity types:
+
+- `product` items under `PK = PRODUCT#<productId>` and `SK = PRODUCT`
+- `stock` items under the same `PK` and `SK = STOCK`
+
+This is the single-table pattern: instead of modeling entities as separate tables, you store related data together and shape the keys around the queries you need. DynamoDB does not enforce foreign keys, so `productId` is a logical link, not a database constraint.
+
+The table also has `GSI1`, which is used for listing all products without scanning the entire table. Product items get:
+
+- `GSI1PK = PRODUCT`
+- `GSI1SK = <productId>`
+
+Seed the table with test data from the `infra` package:
+
+- `cd infra`
+- `npm run seed:dynamodb -- --profile <your-profile> --region eu-central-1`
+
+You can omit `--profile` if your AWS CLI default profile is already configured.
+
+## Manual deployment flow
+
+If you want to repeat the DynamoDB + API setup yourself:
+
+- `cd infra`
+- `npm run deploy:product -- --profile <your-profile> --region eu-central-1`
+- `npm run seed:dynamodb -- --profile <your-profile> --region eu-central-1`
+- `curl https://<ProductServiceApiUrl>/products`
+
 ## Troubleshooting
 
 ### Cannot commit
