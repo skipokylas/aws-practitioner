@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { ProductsService } from '../../products/products.service';
 import { ManageProductsService } from './manage-products.service';
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import {
   MatCell,
   MatCellDef,
@@ -43,7 +43,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
     MatHeaderRow,
     MatRowDef,
     MatRow,
-    DecimalPipe,
     CurrencyPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

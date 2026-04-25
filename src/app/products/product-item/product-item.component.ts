@@ -15,7 +15,7 @@ import { CartCountControlsComponent } from '../../core/cart-count-controls/cart-
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIconButton } from '@angular/material/button';
-import { AsyncPipe, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { AsyncPipe, CurrencyPipe } from '@angular/common';
 import {
   MatCard,
   MatCardActions,
@@ -42,7 +42,6 @@ import {
     MatIcon,
     CartCountControlsComponent,
     AsyncPipe,
-    DecimalPipe,
     CurrencyPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
