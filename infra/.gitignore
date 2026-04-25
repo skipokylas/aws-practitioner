@@ -1,0 +1,24 @@
+# TypeScript build output (keep lambda handlers in JS)
+bin/*.js
+bin/*.d.ts
+lib/*.js
+lib/*.d.ts
+test/*.js
+test/*.d.ts
+
+# Lambda source (do not ignore)
+!lambda/**/*.js
+
+# Dependencies
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Frontend build artifacts copied for hosting
+resources/build
+
+# IDE / OS files
+.idea
+.DS_Store
