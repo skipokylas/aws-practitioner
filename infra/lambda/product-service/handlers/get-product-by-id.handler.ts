@@ -1,11 +1,20 @@
-const { products } = require("./products");
+import { queryProductItemsById } from "../repository/product-table.repository";
+import {
+  isProductItem,
+  isStockItem,
+  toProductResponse,
+} from "../mappers/product-response.mapper";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Content-Type": "application/json",
-};
+} as const;
 
-exports.handler = async (event) => {
+export const handler = async (event: {
+  pathParameters?: {
+    productId?: string;
+  };
+}) => {
   const productId = event?.pathParameters?.productId;
 
   if (!productId) {
@@ -16,7 +25,8 @@ exports.handler = async (event) => {
     };
   }
 
-  const product = products.find((item) => item.id === productId);
+  const productItems = await queryProductItemsById(productId);
+  const product = productItems.find(isProductItem);
 
   if (!product) {
     return {
@@ -26,9 +36,11 @@ exports.handler = async (event) => {
     };
   }
 
+  const stock = productItems.find(isStockItem);
+
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify(product),
+    body: JSON.stringify(toProductResponse(product, stock)),
   };
 };

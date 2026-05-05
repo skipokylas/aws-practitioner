@@ -1,10 +1,14 @@
-export interface Product {
-  /** Available count */
+export interface ProductRecord {
+  /** Available count from stock item */
   count: number;
   description: string;
   id: string;
   price: number;
   title: string;
+  url?: string;
+}
+
+export interface Product extends ProductRecord {
   url: string;
 }
 
