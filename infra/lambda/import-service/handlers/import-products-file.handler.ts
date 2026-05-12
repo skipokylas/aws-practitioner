@@ -5,7 +5,10 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const BUCKET_NAME = process.env.BUCKET_NAME ?? "import-bucket";
 const UPLOADED_PREFIX = process.env.UPLOADED_PREFIX ?? "uploaded/";
 
-const client = new S3Client({});
+const client = new S3Client({
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
+});
 
 const headers = {
   "Access-Control-Allow-Origin": "*",

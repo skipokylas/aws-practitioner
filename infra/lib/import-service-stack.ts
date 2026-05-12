@@ -44,6 +44,19 @@ export class ImportServiceStack extends Stack {
       blockPublicAccess: aws_s3.BlockPublicAccess.BLOCK_ALL,
       autoDeleteObjects: true,
       removalPolicy: RemovalPolicy.DESTROY,
+      cors: [
+        {
+          allowedMethods: [
+            aws_s3.HttpMethods.GET,
+            aws_s3.HttpMethods.HEAD,
+            aws_s3.HttpMethods.PUT,
+          ],
+          allowedOrigins: ["*"],
+          allowedHeaders: ["*"],
+          exposedHeaders: ["ETag"],
+          maxAge: 3000,
+        },
+      ],
     });
 
     const importProductsFile = createLambda(
