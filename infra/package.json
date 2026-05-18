@@ -11,7 +11,9 @@
     "cdk": "cdk",
     "seed:dynamodb": "ts-node scripts/seed-app-table.ts",
     "deploy": "cdk deploy DeployWebAppLearningStack",
+    "deploy:import": "cdk deploy ImportServiceStack",
     "deploy:product": "cdk deploy ProductServiceStack",
+    "deploy:all": "cdk deploy --all",
     "diff:product": "cdk diff ProductServiceStack"
   },
   "devDependencies": {
@@ -25,8 +27,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1037.0",
+    "@aws-sdk/client-s3": "^3.1042.0",
     "@aws-sdk/lib-dynamodb": "^3.1037.0",
+    "@aws-sdk/s3-request-presigner": "^3.1042.0",
     "aws-cdk-lib": "^2.248.0",
-    "constructs": "^10.5.0"
+    "constructs": "^10.5.0",
+    "csv-parser": "^3.2.0"
   }
 }
