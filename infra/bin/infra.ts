@@ -13,12 +13,13 @@ new DeployWebAppStack(app, "DeployWebAppLearningStack", {
   env,
 });
 
-new ImportServiceStack(app, "ImportServiceStack", {
+const productServiceStack = new ProductServiceStack(app, "ProductServiceStack", {
   env,
 });
 
-new ProductServiceStack(app, "ProductServiceStack", {
+new ImportServiceStack(app, "ImportServiceStack", {
   env,
+  catalogItemsQueue: productServiceStack.catalogItemsQueue,
 });
 
 new TodoStack(app, "TodoStackDynamoDB", {

@@ -4,13 +4,18 @@ import {
   aws_lambda,
   aws_s3,
   aws_s3_notifications,
+  aws_sqs,
 } from "aws-cdk-lib";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
 import * as path from "node:path";
 
+interface ImportServiceStackProps extends StackProps {
+  catalogItemsQueue: aws_sqs.IQueue;
+}
+
 export class ImportServiceStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: ImportServiceStackProps) {
     super(scope, id, props);
 
     const lambdaRoot = path.join(__dirname, "..", "lambda", "import-service");
@@ -76,11 +81,13 @@ export class ImportServiceStack extends Stack {
       {
         BUCKET_NAME: uploadBucket.bucketName,
         UPLOADED_PREFIX: "uploaded/",
+        CATALOG_ITEMS_QUEUE_URL: props.catalogItemsQueue.queueUrl,
       },
     );
 
     uploadBucket.grantPut(importProductsFile, "uploaded/*");
     uploadBucket.grantRead(importFileParser, "uploaded/*");
+    props.catalogItemsQueue.grantSendMessages(importFileParser);
 
     uploadBucket.addEventNotification(
       aws_s3.EventType.OBJECT_CREATED,
