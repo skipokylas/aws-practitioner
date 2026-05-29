@@ -9,27 +9,42 @@ import { AuthorizationServiceStack } from "../lib/authorization-service-stack";
 
 const app = new cdk.App();
 const env = { account: "589138972291", region: "eu-central-1" };
+const target = String(app.node.tryGetContext("target") ?? "all");
+const deployAll = target === "all";
+const deployWeb = deployAll || target === "web";
+const deployProduct = deployAll || target === "product" || target === "import";
+const deployAuth = deployAll || target === "auth" || target === "import";
+const deployImport = deployAll || target === "import";
+const deployTodo = deployAll || target === "todo";
 
-new DeployWebAppStack(app, "DeployWebAppLearningStack", {
-  env,
-});
+if (deployWeb) {
+  new DeployWebAppStack(app, "DeployWebAppLearningStack", {
+    env,
+  });
+}
 
-const productServiceStack = new ProductServiceStack(app, "ProductServiceStack", {
-  env,
-});
+const productServiceStack = deployProduct
+  ? new ProductServiceStack(app, "ProductServiceStack", { env })
+  : undefined;
 
-const authorizationServiceStack = new AuthorizationServiceStack(
-  app,
-  "AuthorizationServiceStack",
-  { env },
-);
+const authorizationServiceStack = deployAuth
+  ? new AuthorizationServiceStack(app, "AuthorizationServiceStack", { env })
+  : undefined;
 
-new ImportServiceStack(app, "ImportServiceStack", {
-  env,
-  catalogItemsQueue: productServiceStack.catalogItemsQueue,
-  basicAuthorizerFunction: authorizationServiceStack.basicAuthorizerFunction,
-});
+if (deployImport) {
+  if (!productServiceStack || !authorizationServiceStack) {
+    throw new Error("Import target requires product and auth stacks.");
+  }
 
-new TodoStack(app, "TodoStackDynamoDB", {
-  env,
-});
+  new ImportServiceStack(app, "ImportServiceStack", {
+    env,
+    catalogItemsQueue: productServiceStack.catalogItemsQueue,
+    basicAuthorizerFunction: authorizationServiceStack.basicAuthorizerFunction,
+  });
+}
+
+if (deployTodo) {
+  new TodoStack(app, "TodoStackDynamoDB", {
+    env,
+  });
+}

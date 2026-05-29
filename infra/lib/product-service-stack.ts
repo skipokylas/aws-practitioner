@@ -191,5 +191,18 @@ export class ProductServiceStack extends Stack {
       description: "SQS queue URL for catalog import records",
       exportName: "CatalogItemsQueueUrl",
     });
+
+    // Keep legacy cross-stack export name to avoid breaking existing ImportServiceStack imports
+    // when ProductServiceStack is deployed independently.
+    new CfnOutput(this, "CatalogItemsQueueArnLegacyExport", {
+      value: this.catalogItemsQueue.queueArn,
+      exportName:
+        "ProductServiceStack:ExportsOutputFnGetAttcatalogItemsQueue79451959ArnC8C95D94",
+    });
+
+    new CfnOutput(this, "CatalogItemsQueueRefLegacyExport", {
+      value: this.catalogItemsQueue.queueUrl,
+      exportName: "ProductServiceStack:ExportsOutputRefcatalogItemsQueue7945195903D268A1",
+    });
   }
 }
