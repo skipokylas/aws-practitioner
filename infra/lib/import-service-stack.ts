@@ -12,6 +12,7 @@ import * as path from "node:path";
 
 interface ImportServiceStackProps extends StackProps {
   catalogItemsQueue: aws_sqs.IQueue;
+  basicAuthorizerFunction: aws_lambda.IFunction;
 }
 
 export class ImportServiceStack extends Stack {
@@ -106,13 +107,44 @@ export class ImportServiceStack extends Stack {
       defaultCorsPreflightOptions: {
         allowMethods: aws_apigateway.Cors.ALL_METHODS,
         allowOrigins: aws_apigateway.Cors.ALL_ORIGINS,
+        allowHeaders: aws_apigateway.Cors.DEFAULT_HEADERS,
       },
     });
+
+    // Add CORS headers to 401/403 gateway responses so browser receives them on auth failure
+    api.addGatewayResponse("Unauthorized", {
+      type: aws_apigateway.ResponseType.UNAUTHORIZED,
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'*'",
+      },
+    });
+
+    api.addGatewayResponse("AccessDenied", {
+      type: aws_apigateway.ResponseType.ACCESS_DENIED,
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'*'",
+      },
+    });
+
+    const authorizer = new aws_apigateway.TokenAuthorizer(
+      this,
+      "BasicAuthorizer",
+      {
+        handler: props.basicAuthorizerFunction,
+        identitySource: aws_apigateway.IdentitySource.header("Authorization"),
+      },
+    );
 
     const importResource = api.root.addResource("import");
     importResource.addMethod(
       "GET",
       new aws_apigateway.LambdaIntegration(importProductsFile),
+      {
+        authorizer,
+        authorizationType: aws_apigateway.AuthorizationType.CUSTOM,
+      },
     );
 
     new CfnOutput(this, "ImportServiceApiUrl", {
