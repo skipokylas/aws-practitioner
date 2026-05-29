@@ -1,4 +1,4 @@
-import { Stack, type StackProps } from "aws-cdk-lib";
+import { CfnOutput, Stack, type StackProps } from "aws-cdk-lib";
 import { aws_lambda } from "aws-cdk-lib";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
@@ -43,6 +43,12 @@ export class AuthorizationServiceStack extends Stack {
         environment: envVars,
       },
     );
+
+    new CfnOutput(this, "BasicAuthorizerFunctionArn", {
+      value: this.basicAuthorizerFunction.functionArn,
+      description: "ARN of the Basic Authorizer Lambda function",
+      exportName: "BasicAuthorizerFunctionArn",
+    });
   }
 }
 

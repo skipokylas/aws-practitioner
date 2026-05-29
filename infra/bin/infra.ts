@@ -12,8 +12,8 @@ const env = { account: "589138972291", region: "eu-central-1" };
 const target = String(app.node.tryGetContext("target") ?? "all");
 const deployAll = target === "all";
 const deployWeb = deployAll || target === "web";
-const deployProduct = deployAll || target === "product" || target === "import";
-const deployAuth = deployAll || target === "auth" || target === "import";
+const deployProduct = deployAll || target === "product";
+const deployAuth = deployAll || target === "auth";
 const deployImport = deployAll || target === "import";
 const deployTodo = deployAll || target === "todo";
 
@@ -32,14 +32,8 @@ const authorizationServiceStack = deployAuth
   : undefined;
 
 if (deployImport) {
-  if (!productServiceStack || !authorizationServiceStack) {
-    throw new Error("Import target requires product and auth stacks.");
-  }
-
   new ImportServiceStack(app, "ImportServiceStack", {
     env,
-    catalogItemsQueue: productServiceStack.catalogItemsQueue,
-    basicAuthorizerFunction: authorizationServiceStack.basicAuthorizerFunction,
   });
 }
 
