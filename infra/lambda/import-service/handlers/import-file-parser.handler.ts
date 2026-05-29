@@ -1,10 +1,13 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { Writable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
 const TABLE_BUCKET_NAME = process.env.BUCKET_NAME ?? "import-bucket";
+const CATALOG_ITEMS_QUEUE_URL = process.env.CATALOG_ITEMS_QUEUE_URL ?? "";
 
 const client = new S3Client({});
+const sqsClient = new SQSClient({});
 
 type S3Event = {
   Records?: Array<{
@@ -22,10 +25,19 @@ type S3Event = {
 const decodeKey = (key: string): string =>
   decodeURIComponent(key.replace(/\+/g, " "));
 
-export const handler = async (event: S3Event) => {
-  const csvParser = (await import("csv-parser")) as unknown as (
+const loadCsvParser = async () => {
+  const module = await import("csv-parser");
+  return (module.default ?? module) as (
     options?: Record<string, unknown>,
   ) => NodeJS.ReadWriteStream;
+};
+
+export const handler = async (event: S3Event) => {
+  if (!CATALOG_ITEMS_QUEUE_URL) {
+    throw new Error("Missing CATALOG_ITEMS_QUEUE_URL environment variable");
+  }
+
+  const createCsvParser = await loadCsvParser();
 
   for (const record of event.Records ?? []) {
     const bucketName = record.s3?.bucket?.name ?? TABLE_BUCKET_NAME;
@@ -50,14 +62,21 @@ export const handler = async (event: S3Event) => {
 
     await pipeline(
       response.Body as NodeJS.ReadableStream,
-      csvParser(),
+      createCsvParser(),
       new Writable({
         objectMode: true,
         write(recordData, _encoding, callback) {
-          console.log(
-            `Parsed CSV record from ${bucketName}/${objectKey}: ${JSON.stringify(recordData)}`,
-          );
-          callback();
+          const messageBody = JSON.stringify(recordData);
+
+          sqsClient
+            .send(
+              new SendMessageCommand({
+                QueueUrl: CATALOG_ITEMS_QUEUE_URL,
+                MessageBody: messageBody,
+              }),
+            )
+            .then(() => callback())
+            .catch(callback);
         },
       }),
     );
