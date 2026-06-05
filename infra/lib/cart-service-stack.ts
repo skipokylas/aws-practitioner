@@ -160,10 +160,36 @@ export class CartServiceStack extends Stack {
       },
     });
 
-    api.root.addProxy({
-      defaultIntegration: new aws_apigateway.LambdaIntegration(cartLambda),
-      anyMethod: true,
-    });
+    api.root.addMethod(
+      "GET",
+      new aws_apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseTemplates: {
+              "application/json": JSON.stringify({
+                service: "cart-service",
+                status: "ok",
+              }),
+            },
+          },
+        ],
+        passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+          },
+        ],
+      },
+    );
+
+    const proxy = api.root.addResource("{proxy+}");
+    proxy.addMethod("ANY", new aws_apigateway.LambdaIntegration(cartLambda));
 
     new CfnOutput(this, "CartServiceApiUrl", {
       value: api.url,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
 import { CartModule } from './cart/cart.module';
 import { Cart } from './cart/cart.entity';
 import { CartItem } from './cart/cart-item.entity';
@@ -24,5 +25,6 @@ import { CartItem } from './cart/cart-item.entity';
     }),
     CartModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}
