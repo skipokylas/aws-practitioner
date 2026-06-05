@@ -6,6 +6,7 @@ import { DeployWebAppStack } from "../lib/deploy-web-app-stack";
 import { ProductServiceStack } from "../lib/product-service-stack";
 import { TodoStack } from '../lib/todo-dynamodb-stack';
 import { AuthorizationServiceStack } from "../lib/authorization-service-stack";
+import { CartServiceStack } from "../lib/cart-service-stack";
 
 const app = new cdk.App();
 const env = { account: "589138972291", region: "eu-central-1" };
@@ -16,6 +17,7 @@ const deployProduct = deployAll || target === "product";
 const deployAuth = deployAll || target === "auth";
 const deployImport = deployAll || target === "import";
 const deployTodo = deployAll || target === "todo";
+const deployCart = deployAll || target === "cart";
 
 if (deployWeb) {
   new DeployWebAppStack(app, "DeployWebAppLearningStack", {
@@ -39,6 +41,12 @@ if (deployImport) {
 
 if (deployTodo) {
   new TodoStack(app, "TodoStackDynamoDB", {
+    env,
+  });
+}
+
+if (deployCart) {
+  new CartServiceStack(app, "CartServiceStack", {
     env,
   });
 }
