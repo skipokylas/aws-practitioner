@@ -1,4 +1,4 @@
-import { CfnOutput, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
+import { CfnOutput, Fn, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import {
   aws_apigateway,
   aws_lambda,
@@ -11,7 +11,8 @@ import { Construct } from "constructs";
 import * as path from "node:path";
 
 interface ImportServiceStackProps extends StackProps {
-  catalogItemsQueue: aws_sqs.IQueue;
+  catalogItemsQueue?: aws_sqs.IQueue;
+  basicAuthorizerFunction?: aws_lambda.IFunction;
 }
 
 export class ImportServiceStack extends Stack {
@@ -21,6 +22,14 @@ export class ImportServiceStack extends Stack {
     const lambdaRoot = path.join(__dirname, "..", "lambda", "import-service");
     const projectRoot = path.join(__dirname, "..");
     const depsLockFilePath = path.join(projectRoot, "package-lock.json");
+    const catalogItemsQueue =
+      props.catalogItemsQueue ??
+      aws_sqs.Queue.fromQueueAttributes(this, "ImportedCatalogItemsQueue", {
+        queueArn: Fn.importValue(
+          "ProductServiceStack:ExportsOutputFnGetAttcatalogItemsQueue79451959ArnC8C95D94",
+        ),
+        queueUrl: Fn.importValue("CatalogItemsQueueUrl"),
+      });
     const lambdaDefaults = {
       runtime: aws_lambda.Runtime.NODEJS_22_X,
       projectRoot,
@@ -81,13 +90,13 @@ export class ImportServiceStack extends Stack {
       {
         BUCKET_NAME: uploadBucket.bucketName,
         UPLOADED_PREFIX: "uploaded/",
-        CATALOG_ITEMS_QUEUE_URL: props.catalogItemsQueue.queueUrl,
+        CATALOG_ITEMS_QUEUE_URL: catalogItemsQueue.queueUrl,
       },
     );
 
     uploadBucket.grantPut(importProductsFile, "uploaded/*");
     uploadBucket.grantRead(importFileParser, "uploaded/*");
-    props.catalogItemsQueue.grantSendMessages(importFileParser);
+    catalogItemsQueue.grantSendMessages(importFileParser);
 
     uploadBucket.addEventNotification(
       aws_s3.EventType.OBJECT_CREATED,
@@ -106,13 +115,51 @@ export class ImportServiceStack extends Stack {
       defaultCorsPreflightOptions: {
         allowMethods: aws_apigateway.Cors.ALL_METHODS,
         allowOrigins: aws_apigateway.Cors.ALL_ORIGINS,
+        allowHeaders: aws_apigateway.Cors.DEFAULT_HEADERS,
       },
     });
+
+    // Add CORS headers to 401/403 gateway responses so browser receives them on auth failure
+    api.addGatewayResponse("Unauthorized", {
+      type: aws_apigateway.ResponseType.UNAUTHORIZED,
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'*'",
+      },
+    });
+
+    api.addGatewayResponse("AccessDenied", {
+      type: aws_apigateway.ResponseType.ACCESS_DENIED,
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'*'",
+      },
+    });
+
+    const basicAuthorizerFunction =
+      props.basicAuthorizerFunction ??
+      aws_lambda.Function.fromFunctionAttributes(this, "ImportedBasicAuthorizer", {
+        functionArn: Fn.importValue("BasicAuthorizerFunctionArn"),
+        sameEnvironment: true,
+      });
+
+    const authorizer = new aws_apigateway.TokenAuthorizer(
+      this,
+      "BasicAuthorizer",
+      {
+        handler: basicAuthorizerFunction,
+        identitySource: aws_apigateway.IdentitySource.header("Authorization"),
+      },
+    );
 
     const importResource = api.root.addResource("import");
     importResource.addMethod(
       "GET",
       new aws_apigateway.LambdaIntegration(importProductsFile),
+      {
+        authorizer,
+        authorizationType: aws_apigateway.AuthorizationType.CUSTOM,
+      },
     );
 
     new CfnOutput(this, "ImportServiceApiUrl", {
